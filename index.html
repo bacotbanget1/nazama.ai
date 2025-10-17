@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Sederhana dengan API OpenAI</title>
+    
+    <!-- Embed CSS di sini -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e9f5ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 600px;
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        form label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        form textarea:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+        }
+        
+        form button {
+            margin-top: 25px;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        form button:hover {
+            background-color: #0056b3;
+            transform: scale(1.02);
+        }
+        
+        .response {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f1f8ff;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            min-height: 120px;
+            font-size: 14px;
+            color: #333;
+            position: relative;
+        }
+        
+        .response.loading::before {
+            content: 'Loading...';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #007bff;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        #result {
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bot Web Menggunakan API OpenAI</h1>
+        <form id="botForm">
+            <label for="prompt">Masukkan Prompt Anda:</label>
+            <textarea id="prompt" rows="5" placeholder="Contoh: Apa itu AI?" required></textarea>
+            
+            <button type="submit">Generate Respons</button>
+        </form>
+        
+        <div id="responseArea" class="response">
+            <h2>Respons dari API:</h2>
+            <p id="result"></p>
+        </div>
+    </div>
+    
+    <!-- Embed JavaScript di sini -->
+    <script>
+        // Ganti nilai di bawah ini dengan API key Anda
+        const apiKey = "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";  // Contoh: "sk-your-api-key-here". Isi di sini!
+        
+        if (!apiKey) {
+            alert('Error: API key belum diisi di JavaScript. Silakan edit kode dan masukkan API key Anda.');
+        }
+        
+        document.getElementById('botForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const prompt = document.getElementById('prompt').value;
+            const resultElement = document.getElementById('result');
+            const responseArea = document.getElementById('responseArea');
+            
+            if (!prompt) {
+                resultElement.textContent = 'Error: Prompt belum diisi.';
+                return;
+            }
+            
+            if (!apiKey) {
+                resultElement.textContent = 'Error: API key belum diisi.';
+                return;
+            }
+            
+            responseArea.classList.add('loading');
+            resultElement.textContent = '';
+            
+            const apiUrl = 'https://api.openai.com/v1/completions';
+            const data = {
+                model: 'text-davinci-002',
+                prompt: prompt,
+                max_tokens: 100,
+                temperature: 0.5,
+                n: 1
+            };
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                responseArea.classList.remove('loading');
+                if (!response.ok) {
+                    throw new Error('Error dari server: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.choices && data.choices.length > 0) {
+                    resultElement.textContent = data.choices[0].text.trim();
+                } else {
+                    resultElement.textContent = 'Tidak ada respons dari API.';
+                }
+            })
+            .catch(error => {
+                responseArea.classList.remove('loading');
+                resultElement.textContent = 'Error: ' + error.message;
+                console.error('Fetch error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
